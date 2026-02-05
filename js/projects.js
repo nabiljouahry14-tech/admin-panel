@@ -635,7 +635,7 @@ async function refresh() {
   // logout
   document.getElementById("logoutBtn").addEventListener("click", async () => {
     await window.sb.auth.signOut();
-    window.location.href = "login.html";
+    window.location.href = "index.html";
   });
 
   // live link hint (create)
@@ -732,4 +732,5 @@ async function refresh() {
   // initial load
   await refresh();
 })();
+
 
