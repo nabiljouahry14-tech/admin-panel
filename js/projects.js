@@ -78,7 +78,7 @@ function renderPageShell() {
           <div>
             <div style="font-size:16px;">Create Project</div>
             <div class="muted" style="font-size:13px;margin-top:4px;">
-              Add Leo AI, Arc Raiders Guide, and future work. Stored in Supabase.
+              Here You can add as much projects as You want (even in demo mode) . Stored in Supabase.
             </div>
           </div>
           <span class="pill" id="statusPill">Ready</span>
@@ -732,3 +732,4 @@ async function refresh() {
   // initial load
   await refresh();
 })();
+
