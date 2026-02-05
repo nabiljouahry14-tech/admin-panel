@@ -1,0 +1,158 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Dashboard</title>
+  <link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/ui.js"></script>
+
+  <script>
+    function escapeHtml(s) {
+      return String(s ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    async function requireAuth() {
+      const { data } = await window.sb.auth.getSession();
+      if (!data.session) window.location.href = "login.html";
+      return data.session;
+    }
+
+    async function boot() {
+      const session = await requireAuth();
+
+      mountLayout({
+        title: "Dashboard",
+        subtitle: "Overview, quick stats, and system status"
+      });
+
+      document.getElementById("who").textContent = session.user.email;
+
+      document.getElementById("logoutBtn").addEventListener("click", async () => {
+        await window.sb.auth.signOut();
+        window.location.href = "login.html";
+      });
+
+      document.getElementById("page").innerHTML = `
+        <div class="grid">
+          <div class="card kpi">
+            <div class="label">Auth</div>
+            <div class="value"><span class="statusDot"></span>Online</div>
+            <div class="hint">Session active</div>
+          </div>
+
+          <div class="card kpi">
+            <div class="label">Projects</div>
+            <div class="value" id="projectsCount">—</div>
+            <div class="hint">Stored in database</div>
+          </div>
+
+          <div class="card kpi">
+            <div class="label">System</div>
+            <div class="value">Healthy</div>
+            <div class="hint">No errors detected</div>
+          </div>
+
+          <div class="card" style="grid-column: span 12;">
+            <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;">
+              <div>
+                <div style="font-size:16px;">Activity</div>
+                <div class="muted" style="font-size:13px;margin-top:4px;">
+                  Authentication, project changes, and system actions
+                </div>
+              </div>
+              <span class="pill">Live</span>
+            </div>
+
+            <div style="height:12px;"></div>
+
+            <div id="activityList" class="muted" style="font-size:13px; line-height:1.7;">
+              Loading activity...
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Projects count
+      try {
+        const { count } = await window.sb
+          .from("projects")
+          .select("*", { count: "exact", head: true });
+
+        document.getElementById("projectsCount").textContent = String(count ?? 0);
+      } catch {
+        document.getElementById("projectsCount").textContent = "—";
+      }
+
+      // ACTIVITY FEED
+      try {
+        const { data: userRes } = await window.sb.auth.getUser();
+        const user = userRes?.user;
+
+        const lastSignIn = user?.last_sign_in_at
+          ? new Date(user.last_sign_in_at).toLocaleString()
+          : null;
+
+        const sessionLine = session?.expires_at
+          ? `Session expires at ${new Date(session.expires_at * 1000).toLocaleString()}`
+          : "Session active";
+
+        const lines = [];
+
+        if (lastSignIn) {
+          lines.push(`• Last sign-in: <b>${escapeHtml(lastSignIn)}</b>`);
+        }
+
+        lines.push(`• ${escapeHtml(sessionLine)}`);
+
+        // Recent activity logs
+        const { data: logs, error: logsErr } = await window.sb
+          .from("activity_logs")
+          .select("action, title, status, user_email, created_at")
+          .order("created_at", { ascending: false })
+          .limit(8);
+
+        lines.push(`• Recent actions:`);
+
+        if (!logsErr && logs && logs.length) {
+          for (const l of logs) {
+            const when = l.created_at
+              ? new Date(l.created_at).toLocaleString()
+              : "";
+
+            const action = escapeHtml(l.action);
+            const title = l.title ? ` <b>${escapeHtml(l.title)}</b>` : "";
+            const status = l.status ? ` <span class="muted">(${escapeHtml(l.status)})</span>` : "";
+            const actor = l.user_email
+              ? ` — <span class="muted">${escapeHtml(l.user_email)}</span>`
+              : "";
+
+            lines.push(
+              `&nbsp;&nbsp;– ${action}${title}${status} <span class="muted">• ${escapeHtml(when)}</span>${actor}`
+            );
+          }
+        } else {
+          lines.push(`&nbsp;&nbsp;– <span class="muted">No actions yet</span>`);
+        }
+
+        document.getElementById("activityList").innerHTML = lines.join("<br>");
+      } catch {
+        document.getElementById("activityList").textContent =
+          "Could not load activity.";
+      }
+    }
+
+    boot();
+  </script>
+</body>
+</html>

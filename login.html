@@ -1,0 +1,230 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin Login</title>
+
+  <style>
+    :root{
+      --bg:#0b0f19;
+      --card:#121a2a;
+      --line:#24304a;
+      --text:#e8eefc;
+      --muted:#a7b3d1;
+      --accent:#6ea8ff;
+    }
+
+    *{box-sizing:border-box}
+
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto;
+      background:
+        radial-gradient(1200px 600px at 20% -10%, rgba(110,168,255,.12), transparent 40%),
+        radial-gradient(900px 500px at 90% 10%, rgba(140,110,255,.10), transparent 45%),
+        var(--bg);
+      color:var(--text);
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .card{
+      width:380px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.04), transparent 60%),
+        var(--card);
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:22px;
+      box-shadow:
+        0 20px 60px rgba(0,0,0,.55),
+        inset 0 1px 0 rgba(255,255,255,.05);
+      animation: enter .45s ease;
+    }
+
+    @keyframes enter{
+      from{opacity:0; transform:translateY(12px)}
+      to{opacity:1; transform:none}
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      margin-bottom:16px;
+    }
+
+    .logo{
+      width:40px;
+      height:40px;
+      border-radius:12px;
+      background:
+        linear-gradient(135deg, rgba(110,168,255,.9), rgba(140,110,255,.9));
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:700;
+      font-size:18px;
+      color:#0b0f19;
+      box-shadow: 0 10px 30px rgba(110,168,255,.35);
+    }
+
+    h2{
+      margin:0;
+      font-size:18px;
+      letter-spacing:.3px;
+    }
+
+    .subtitle{
+      margin:4px 0 18px;
+      font-size:14px;
+      color:var(--muted);
+    }
+
+    label{
+      display:block;
+      margin:14px 0 6px;
+      font-size:13px;
+      color:var(--muted);
+    }
+
+    .input{
+      width:100%;
+      padding:11px 12px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:#0e1524;
+      color:var(--text);
+      outline:none;
+      transition:.15s;
+    }
+
+    .input::placeholder{color:#6f7da6}
+
+    .input:focus{
+      border-color:rgba(110,168,255,.45);
+      box-shadow:0 0 0 4px rgba(110,168,255,.15);
+    }
+
+    .btn{
+      width:100%;
+      margin-top:18px;
+      padding:11px 12px;
+      border-radius:12px;
+      border:1px solid rgba(110,168,255,.45);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.08), transparent 70%),
+        #1f2a44;
+      color:var(--text);
+      font-weight:600;
+      cursor:pointer;
+      transition:.15s;
+    }
+
+    .btn:hover{
+      transform:translateY(-1px);
+      box-shadow:0 12px 30px rgba(110,168,255,.25);
+    }
+
+    .btn:active{transform:none}
+
+    .msg{
+      margin-top:14px;
+      font-size:13px;
+      color:var(--muted);
+      min-height:1em;
+    }
+
+    .demo{
+      margin-top:16px;
+      padding:12px;
+      border-radius:12px;
+      border:1px dashed rgba(255,255,255,.15);
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.5;
+      background: rgba(255,255,255,.02);
+    }
+
+    .footer{
+      margin-top:16px;
+      font-size:12px;
+      color:#6f7da6;
+      text-align:center;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <div class="brand">
+      <div class="logo">A</div>
+      <div>
+        <h2>Admin Panel</h2>
+        <div class="subtitle">Authorized access only</div>
+      </div>
+    </div>
+
+    <label>Email</label>
+    <input id="email" class="input" type="email" placeholder="admin@example.com" />
+
+    <label>Password</label>
+    <input id="password" class="input" type="password" placeholder="••••••••" />
+
+    <button class="btn" id="loginBtn">Sign in</button>
+
+    <div id="msg" class="msg"></div>
+
+    <!-- Demo credentials -->
+    <div class="demo">
+      <b>Demo access</b><br>
+      Email: <code>demo@admin.local</code><br>
+      Password: <code>demo1234</code>
+    </div>
+
+    <div class="footer">
+      Portfolio Admin • Secure Access
+    </div>
+  </div>
+
+  <!-- Supabase (no npm, no node) -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="js/supabase.js"></script>
+
+  <script>
+    const msg = document.getElementById("msg");
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+    const loginBtn = document.getElementById("loginBtn");
+
+    async function login() {
+      msg.textContent = "Signing in…";
+
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+
+      const { error } = await window.sb.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        msg.textContent = error.message;
+        return;
+      }
+
+      window.location.href = "dashboard.html";
+    }
+
+    loginBtn.addEventListener("click", login);
+
+    // Enter key support
+    [emailInput, passwordInput].forEach(el => {
+      el.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") login();
+      });
+    });
+  </script>
+
+</body>
+</html>
